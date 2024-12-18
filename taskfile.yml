@@ -1,5 +1,6 @@
+---
 # https://taskfile.dev/
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -19,3 +20,70 @@ tasks:
     internal: true
     cmds:
       - task --list
+
+  test:
+    desc: Run Go tests locally
+    cmds:
+      - ./scripts/ci/go_test.sh local
+
+  container-go-test:
+    desc: Run Go tests inside Podman container
+    cmds:
+      - task: deploy-podman-host-container
+      - task: ensure-podman-socket
+      - task: deploy-pulpod-test-container
+      - ./scripts/ci/go_test.sh container
+
+  container-go-test-cleanup:
+    desc: Delete Podman host container
+    cmds:
+      - ./scripts/ci/podman_host_container.sh cleanup
+
+  macos-ci-go-test:
+    desc: Run Go tests inside Ubuntu Lima VM on Mac to emulate GitHub CI
+    platforms: [darwin]
+    cmds:
+      - task: deploy-macos-ci-env
+      - ./scripts/ci/macos_ci_env.sh container_go_test
+
+  macos-ci-go-test-cleanup:
+    desc: Cleanup macos CI VM
+    platforms: [darwin]
+    cmds:
+      - ./scripts/ci/macos_ci_env.sh cleanup
+
+  # Internal Tasks
+
+  deploy-podman-host-container:
+    desc: Create and start Podman host container
+    internal: true
+    cmds:
+      - ./scripts/ci/podman_host_container.sh run
+    status:
+      - ./scripts/ci/podman_host_container.sh check
+
+  ensure-podman-socket:
+    desc: Ensure Podman socket is running inside Podman host container
+    internal: true
+    cmds:
+      - ./scripts/ci/podman_socket.sh run
+    status:
+      - ./scripts/ci/podman_socket.sh check
+
+  deploy-pulpod-test-container:
+    desc: Creates container inside the Podman host to execute
+      intergration tests
+    internal: true
+    cmds:
+      - ./scripts/ci/pulpod_test_container.sh run
+    status:
+      - ./scripts/ci/pulpod_test_container.sh check
+
+  deploy-macos-ci-env:
+    desc: Create VM using Lima
+    internal: true
+    platforms: [darwin]
+    cmds:
+      - ./scripts/ci/macos_ci_env.sh run
+    status:
+      - ./scripts/ci/macos_ci_env.sh check
