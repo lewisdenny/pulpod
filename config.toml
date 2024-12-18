@@ -1,0 +1,5 @@
+[containermanager]
+flavor = "podman"
+socket = "unix:///run/podman/podman.sock"
+[logging]
+devmode = true
