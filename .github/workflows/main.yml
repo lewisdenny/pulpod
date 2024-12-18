@@ -8,9 +8,9 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: |
-          podman run --privileged -it quay.io/podman/stable bash
-          podman system service --time=0 unix:///tmp/podman.sock &
-          podman run -it --security-opt label:type:container_runtime_t -v /tmp/podman.sock:/tmp/docker.sock:ro,z fedora:41 bash
-          dnf install podman-remote -y
-          podman-remote  --url unix:///tmp/docker.sock ps
-          podman-remote  --url unix:///tmp/docker.sock run -it fedora:41 bash
+          podman run -d --privileged --name podman_host quay.io/podman/stable sleep infinity
+          podman exec podman_host bash -c "podman system service --time=0 unix:///tmp/podman.socket &"
+          podman exec podman_host bash -c "podman run -d --security-opt label:type:container_runtime_t -v /tmp/podman.socket:/tmp/podman.socket:ro,z --name pulpod fedora:41 sleep infinity"
+          podman exec podman_host bash -c "podman exec pulpod bash -c 'dnf install podman-remote -y'"
+          podman exec podman_host bash -c "podman exec pulpod bash -c 'podman-remote  --url unix:///tmp/podman.socket ps'"
+          podman exec podman_host bash -c "podman exec pulpod bash -c 'podman-remote  --url unix:///tmp/podman.socket run fedora:41 echo hey'"
