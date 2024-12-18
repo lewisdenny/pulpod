@@ -19,3 +19,40 @@ tasks:
     internal: true
     cmds:
       - task --list
+
+  run_go_test:
+    desc: Run go test
+    cmds:
+      - task: deploy_podman_host
+      - task: create_podman_socket
+      - task: create_pulpod_test_container
+      - task: bootstrap_pulpod_test_container
+      - task: run_pulpod_intergration_tests
+
+  deploy_podman_host:
+    desc: Runs podman host container
+    internal: true
+    cmds:
+      - podman run -d --privileged -v ${PWD}:/pulpod --name podman_host quay.io/podman/stable sleep infinity
+    status:
+      - '[ "$(podman ps -f status=running -f name=podman_host |wc -l)" = "2" ]'
+
+  create_podman_socket:
+    cmds:
+      - podman exec podman_host bash -c "podman system service --time=0 unix:///tmp/podman.socket &"
+    status:
+     - podman exec podman_host bash -c "ls /tmp/podman.socket"
+
+  create_pulpod_test_container:
+    cmds:
+      - 'podman exec podman_host bash -c "podman run -d --security-opt label:type:container_runtime_t -v /tmp/podman.socket:/var/run/podman/podman.sock:ro,z -v /pulpod:/pulpod --name pulpod_test fedora:41 sleep infinity"'
+    status:
+      - podman exec podman_host bash -c '[ "$(podman ps -f status=running -f name=pulpod_test |wc -l)" = "2" ]'
+
+  bootstrap_pulpod_test_container:
+    cmds:
+      - podman exec podman_host bash -c "podman exec pulpod_test bash -c 'dnf install wget tput golang btrfs-progs-devel gpgme-devel -y'"
+      # - podman exec podman_host bash -c "podman exec pulpod_test bash -c 'wget https://git.io/go-installer.sh && env GOROOT=/usr/sbin bash go-installer.sh --version 1.23.4'"
+
+  run_pulpod_intergration_tests:
+    cmd: podman exec podman_host bash -c "podman exec pulpod_test bash -c 'cd /pulpod && go test -coverprofile /tmp/fmtcoverage.txt ./...'"
