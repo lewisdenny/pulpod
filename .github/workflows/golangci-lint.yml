@@ -19,6 +19,9 @@ jobs:
         with:
           go-version: '^1.23.3'
 
+      - name: Install dependences
+        run: sudo apt -y install libgpgme-dev libbtrfs-dev
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
