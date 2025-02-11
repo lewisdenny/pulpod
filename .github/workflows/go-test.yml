@@ -16,4 +16,4 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: task run_go_test
+        run: task container-go-test
