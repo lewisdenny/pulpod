@@ -16,10 +16,10 @@ type CustomLogger struct {
 	*zap.SugaredLogger
 }
 
-func GetLogger(LoggingConfig *config.LoggingConfig) error {
+func GetLogger(loggingConfig *config.LoggingConfig) error {
 	if Log == nil {
 		// Initialize the logger only once
-		err := newCustomLogger(LoggingConfig)
+		err := newCustomLogger(loggingConfig)
 		if err != nil {
 			return err
 		}
@@ -28,13 +28,13 @@ func GetLogger(LoggingConfig *config.LoggingConfig) error {
 }
 
 // NewCustomLogger creates and initializes a new CustomLogger.
-func newCustomLogger(LoggingConfig *config.LoggingConfig) error {
+func newCustomLogger(loggingConfig *config.LoggingConfig) error {
 	var (
 		err    error
 		logger *zap.Logger
 	)
 
-	if LoggingConfig.DevMode {
+	if loggingConfig.DevMode {
 		logger, err = zap.NewDevelopment()
 	} else {
 		logger, err = zap.NewProduction()
@@ -45,7 +45,11 @@ func newCustomLogger(LoggingConfig *config.LoggingConfig) error {
 		return err
 	}
 
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	Log = &CustomLogger{
 		SugaredLogger: logger.Sugar(),

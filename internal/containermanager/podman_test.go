@@ -5,7 +5,6 @@ import (
 	"os"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/containers/podman/v5/pkg/bindings/containers"
 	"github.com/containers/podman/v5/pkg/bindings/images"
@@ -43,7 +42,7 @@ func TestNewPodmanManager_Integration(t *testing.T) {
 		invalidConfig = config.ContainerManagerConfig{Socket: "unix:///fake/socket", Flavor: "podman"}
 
 		// https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
-		versionPattern string = `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.
+		versionPattern = `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.
 		(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$`
 	)
 
@@ -100,7 +99,6 @@ func TestCreateContainer_Integration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.pass {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				testContainerName := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -110,7 +108,9 @@ func TestCreateContainer_Integration(t *testing.T) {
 				_, _ = images.Pull(cm.ReturnContext(), tc.containerImage, nil)
 				containerID, err := cm.CreateContainer(tc.containerImage, testContainerName)
 				assert.Nil(t, err)
-				inspectData, err := containers.Inspect(cm.ReturnContext(), containerID, nil)
+
+				inspectData, _ := containers.Inspect(cm.ReturnContext(), containerID, nil)
+
 				assert.Equal(t, containerID, inspectData.ID, nil)
 
 				// Remove test container
@@ -121,7 +121,6 @@ func TestCreateContainer_Integration(t *testing.T) {
 					t.Fatal(err)
 				}
 			} else {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				randStr := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -149,7 +148,6 @@ func TestStartContainer_Integration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.pass {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				testContainerName := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -167,7 +165,7 @@ func TestStartContainer_Integration(t *testing.T) {
 				}
 
 				// Check container started
-				inspectData, err := containers.Inspect(cm.ReturnContext(), containerID, nil)
+				inspectData, _ := containers.Inspect(cm.ReturnContext(), containerID, nil)
 				assert.True(t, inspectData.State.Running)
 
 				// Remove test container
@@ -194,7 +192,6 @@ func TestStopContainer_Integration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.pass {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				testContainerName := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -212,7 +209,7 @@ func TestStopContainer_Integration(t *testing.T) {
 				}
 
 				// Check container started
-				inspectData, err := containers.Inspect(cm.ReturnContext(), containerID, nil)
+				inspectData, _ := containers.Inspect(cm.ReturnContext(), containerID, nil)
 				assert.True(t, inspectData.State.Running)
 
 				// Stop Container
@@ -222,7 +219,7 @@ func TestStopContainer_Integration(t *testing.T) {
 				}
 
 				// Check container stopped
-				inspectData, err = containers.Inspect(cm.ReturnContext(), containerID, nil)
+				inspectData, _ = containers.Inspect(cm.ReturnContext(), containerID, nil)
 				assert.False(t, inspectData.State.Running)
 
 				// Remove test container
@@ -249,7 +246,6 @@ func TestRemoveContainer_Integration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.pass {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				testContainerName := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -272,7 +268,7 @@ func TestRemoveContainer_Integration(t *testing.T) {
 				}
 
 				// Check container started
-				inspectData, err := containers.Inspect(cm.ReturnContext(), containerResponse.ID, nil)
+				inspectData, _ := containers.Inspect(cm.ReturnContext(), containerResponse.ID, nil)
 				assert.True(t, inspectData.State.Running)
 
 				// Remove test container
@@ -282,7 +278,7 @@ func TestRemoveContainer_Integration(t *testing.T) {
 				}
 
 				// Check it's deleted
-				inspectData, err = containers.Inspect(cm.ReturnContext(), containerResponse.ID, nil)
+				_, err = containers.Inspect(cm.ReturnContext(), containerResponse.ID, nil)
 				assert.Contains(t, err.Error(), "no container with name or ID")
 			}
 		})
@@ -333,7 +329,6 @@ func TestListContainer_Integration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.pass {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				testContainerName := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -360,6 +355,9 @@ func TestListContainer_Integration(t *testing.T) {
 
 				// Check containerList returns our created container
 				containerList, err := cm.List()
+				if err != nil {
+					t.Fatal(err)
+				}
 				println(containerList)
 				assert.Contains(t, containerList, testContainerName)
 
@@ -369,7 +367,6 @@ func TestListContainer_Integration(t *testing.T) {
 					t.Fatal(err)
 				}
 			} else {
-				rand.Seed(uint64(time.Now().UnixNano()))
 				testContainerName := fmt.Sprintf("%x", rand.Int63())
 				cm, err := NewContainerManager(&TestConfig.ContainerManagerConfig)
 				if err != nil {
@@ -393,6 +390,10 @@ func TestListContainer_Integration(t *testing.T) {
 
 				// Check containerList returns our created container
 				containerList, err := cm.List()
+				if err != nil {
+					t.Fatal(err)
+				}
+
 				assert.NotContains(t, containerList, testContainerName)
 
 				// Remove test container

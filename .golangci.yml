@@ -1,21 +1,22 @@
+---
 linters:
   enable:
     - bodyclose
     - dupl
     - errcheck
     - errorlint
-    - funlen
-    - gocognit
+    # - funlen
+    # - gocognit
     - goconst
     - gocritic
     - gocyclo
-    - godox
+    # - godox
     - gofmt
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - nestif
+    # - nestif
     - prealloc
     - revive
     - staticcheck

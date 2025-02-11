@@ -48,10 +48,14 @@ func loadConfig(config *Config, path string) error {
 	// PULPOD_CONTAINERMANAGER_FLAVOR=podman
 	// PULPOD_ will be trimmed and _ replaced with .
 	// resulting in containermanager.flavor: podman
-	koanfInstance.Load(env.Provider("PULPOD_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, "PULPOD_")), "_", ".", -1)
+	err = koanfInstance.Load(env.Provider("PULPOD_", ".", func(s string) string {
+		return strings.ReplaceAll(strings.ToLower(
+			strings.TrimPrefix(s, "PULPOD_")), "_", ".")
 	}), nil)
+
+	if err != nil {
+		return err
+	}
 
 	return koanfInstance.Unmarshal("", config)
 }
