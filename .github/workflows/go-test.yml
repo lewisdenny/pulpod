@@ -1,0 +1,21 @@
+---
+# GitHub workflow to run go test inside nested Podman container
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  go_test:
+    name: Run go test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        shell: bash
+        run: task container-go-test

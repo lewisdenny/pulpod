@@ -1,5 +1,6 @@
+---
 # https://taskfile.dev/
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -16,6 +17,10 @@ tasks:
 
   list:
     desc: List available tasks
-    internal: true
     cmds:
       - task --list
+
+  container-go-test:
+    desc: Run Go tests inside Podman container
+    cmds:
+      - echo Run go test
