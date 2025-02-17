@@ -1,11 +1,11 @@
 ---
-# GitHub workflow to run go test inside nested Podman container
+# GitHub workflow to run shellcheck on all *.sh files
 on:
   pull_request:
   workflow_dispatch:
 jobs:
-  go_test:
-    name: Run go test
+  shellcheck:
+    name: Run shellcheck on all *.sh files
     runs-on: ubuntu-22.04
     steps:
       - name: Install Task
@@ -16,6 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run go test
+      - name: Run shellcheck
         shell: bash
-        run: task container-go-test
+        run: task shellcheck
